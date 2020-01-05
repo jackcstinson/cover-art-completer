@@ -1,6 +1,6 @@
 import os
 import pylast
-import config
+import cover_completer.config
 import wget
 from tinytag import TinyTag
 import re

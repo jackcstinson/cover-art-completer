@@ -7,7 +7,6 @@ with open("README.md", "r") as rh:
 setuptools.setup(
     name='cover_completer',
     version='0.1',
-    scripts=['cover_completer'],
     author="Jack Stinson",
     description="Recursively downloads cover art for your music library",
     long_description=long_description,
@@ -25,7 +24,7 @@ setuptools.setup(
     ],
     entry_points={
         'console_scripts': [
-            'cover_completer = cover_completer.cli:main',
+            'covercompleter = cover_completer.cli:main',
         ]
     }
 )
