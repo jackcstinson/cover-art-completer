@@ -1,39 +1,15 @@
 import os
-import mutagen 
 import pylast
 import config
 import wget
-import time
+from tinytag import TinyTag
+import re
 
-"""
-PARSING AUDIO FILES
-
-# Looks like we can use mutagen
-album_name = mutagen.File(trackname)['album'][0]
-
-# although it looks like sometimes 'album' is not quite right, might have to 
-use something like
-for key in file.keys():
-    if key.contains('alb'):
-        album_name = file[key]
-
-# or something like that, plus the same for the artist
-
-GETTING ARTWORK
-
-# Looks like we create the network object, 
-# then grab the album object
-# then grab the cover image
-
-network = pylast.LastFMNetwork(api_key...)..
-album = network.get_album(album_name)
-image_uri = album.get_cover_image(size=SIZE_EXTRA_LARGE)
-"""
-
-testroot = "D:\MusicTest"
+testroot = "D:\Music\King Crimson"
 root = testroot
 network = pylast.LastFMNetwork(api_key=config.API_KEY, api_secret=config.API_SECRET)
 IMAGE_TYPES = [".png", ".jpg", ".gif", ".tiff", ".svg", ".jpeg"]
+MUSIC_TYPES = [".m4a", ".flac", ".mp3", ".mp4", ".wav", ".pcm", ".aiff", ".aac", ".wma", ".alac"]
 
 # artist = network.get_artist("Brian Eno")
 # print(artist)
@@ -41,29 +17,54 @@ IMAGE_TYPES = [".png", ".jpg", ".gif", ".tiff", ".svg", ".jpeg"]
 def do_the_thing(path):
     # recursion, baby
     for root, subdirs, files in os.walk(path):
-        if files: # in a dir that has music in it
-            if not has_art(files):
-                track = os.path.join(root,files[0]) # just grab the first track
-                get_cover(track)
+        if has_filetype(files, MUSIC_TYPES): # in a dir that has music in it
+            if not has_filetype(files, IMAGE_TYPES): # with no images
+                any_old_audio = get_audiotrack(files)
+                track_name = os.path.join(root,any_old_audio) # just grab the first track
+                (artist_name, album_name) = get_metadata(track_name)
+                get_cover(artist_name, album_name, root)
 
-def has_art(files):
+
+def has_filetype(files, filetypes):
     for f in files:
-        if any(x in f for x in IMAGE_TYPES):
+        if any(x in f for x in filetypes):
             return True
-    return False     
+    return False
 
-def get_cover(track_name):
-    f = open("shitballs.txt","a")
-    print(track_name)
-    metadata = mutagen.File(track_name).tags
-    f.write(str(metadata) + "\n\n")
-    # artist_name = 
-    # album = network.get_album(artist_name, album_name)
-    # image_url = album.get_cover_image(size=4)
-    # wget.download(image_url, "cover.png")
+def get_audiotrack(files):
+    for f in files:
+        if any(x in f for x in MUSIC_TYPES):
+            return f   
 
-# get_cover(network,"Julia Jacklin","Crushing")
+def get_metadata(track_name):
+    # TODO this has to look at the format and decide how to get it
+    artist_name = ""
+    album_name = ""
+
+    try:
+        tag = TinyTag.get(track_name)
+        artist_name = tag.artist.rstrip('\x00')
+        album_name = tag.album.rstrip('\x00')
+        album_name = re.sub("\[.+\]", '', album_name).rstrip() # remove shit like '[Stereo Remaster]'
+    except:
+        print("Tinytag couldn't parse " + track_name)
+
+    return (artist_name, album_name) 
+
+def get_cover(artist_name, album_name, directory):
+    try:
+        album = network.get_album(artist_name, album_name)
+        image_url = album.get_cover_image(size=4)
+        wget.download(image_url, os.path.join(directory, "cover.png"))
+    except:
+        if "(" in album_name:
+            print("Could not get art for album " + album_name, "  will try removing brackets")
+            album_name = re.sub("\(.+\)", '', album_name).rstrip()
+            print(album_name)
+            get_cover(artist_name, album_name, directory)
+        else:
+            print("Could not get art for album " + album_name)
+
 do_the_thing(root)
-print(root)
 
 
