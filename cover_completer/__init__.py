@@ -5,14 +5,10 @@ import wget
 from tinytag import TinyTag
 import re
 
-testroot = "D:\Music\King Crimson"
-root = testroot
+
 network = pylast.LastFMNetwork(api_key=config.API_KEY, api_secret=config.API_SECRET)
 IMAGE_TYPES = [".png", ".jpg", ".gif", ".tiff", ".svg", ".jpeg"]
 MUSIC_TYPES = [".m4a", ".flac", ".mp3", ".mp4", ".wav", ".pcm", ".aiff", ".aac", ".wma", ".alac"]
-
-# artist = network.get_artist("Brian Eno")
-# print(artist)
 
 def do_the_thing(path):
     # recursion, baby
@@ -23,7 +19,8 @@ def do_the_thing(path):
                 any_old_audio = get_audiotrack(files)
                 track_name = os.path.join(root,any_old_audio) # just grab the first track
                 (artist_name, album_name) = get_metadata(track_name)
-                get_cover(artist_name, album_name, root)
+                if artist_name and album_name: 
+                    get_cover(artist_name, album_name, root)
 
 
 def has_filetype(files, filetypes):
@@ -38,7 +35,6 @@ def get_audiotrack(files):
             return f   
 
 def get_metadata(track_name):
-    # TODO this has to look at the format and decide how to get it
     artist_name = ""
     album_name = ""
 
@@ -66,7 +62,5 @@ def get_cover(artist_name, album_name, directory):
         else:
             print("Could not get art for album " + album_name)
 
-if __name__ == "__main__":
-    do_the_thing(root)
 
 
