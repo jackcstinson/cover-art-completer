@@ -16,6 +16,7 @@ setuptools.setup(
     install_requires=[
         'pylast',
         'tinytag',
+        'wget',
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
